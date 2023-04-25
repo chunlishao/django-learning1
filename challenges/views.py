@@ -1,6 +1,7 @@
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseNotFound, HttpResponseRedirect
+from django.http import Http404, HttpResponseNotFound, HttpResponseRedirect
 from django.urls import reverse
+from django.template.loader import render_to_string
 
 # Create your views here.
 monthMapping = {1 : "january", 
@@ -11,7 +12,7 @@ monthMapping = {1 : "january",
 monthChallenges = {"january" : "run every day",
                    "feburary" : "learning coding",
                    "march" : "be focus",
-                   "april" : "find a job",}
+                   "april" : None,}
 
 redirect_basic_url = "month_challenge"
 
@@ -19,25 +20,27 @@ def GoHome(request):
     months = list(monthChallenges.keys())
     list_item = ""
 
-    for month in months:        
-        redirect_path = reverse(redirect_basic_url, args=[month])
-        list_item += f"<li><a href=\"{redirect_path}\">{month}</a></li>"
+    return render(request, "challenges/index.html", {
+        "months" : months
+    })
 
-    return HttpResponse(f"<ul>{list_item}</ul>")
 
 def indexByNum(request, month):
+    redirect_month = "invalid"
     if monthMapping.__contains__(month):
         redirect_month = monthMapping[month]
-        redirect_path = reverse(redirect_basic_url, args=[redirect_month])
-        return HttpResponseRedirect(redirect_path)
-    else:
-        return HttpResponseNotFound("not valid")
+    
+    redirect_path = reverse(redirect_basic_url, args=[redirect_month])
+    return HttpResponseRedirect(redirect_path)
     
     
 def index(request, month):
     try:
-        respondData = f"<h1>{monthChallenges[month]}</h1>"
-        return HttpResponse(respondData)
+        respondData = monthChallenges[month]
+        return render(request, "challenges/challenge.html", {
+            "month" : month,
+            "challenge" : respondData
+        })
     except:
-        return HttpResponseNotFound("this month is not supported")
+        raise Http404()
     
